@@ -238,7 +238,7 @@ class HFModel(Model):
             max_length=200,
             num_beams=1,
             do_sample=False)
-        return tokenizer.decode(generate_ids, 
+        return tokenizer.batch_decode(generate_ids, 
         skip_special_tokens=True, 
         clean_up_tokenization_spaces=True)[0]
 

@@ -235,9 +235,7 @@ class HFModel(Model):
         # See https://huggingface.co/docs/transformers/v4.23.1/en/main_classes/text_generation#transformers.generation_utils.GenerationMixin.generate)
         generate_ids = self.model.generate(
             **tokenized_inputs, 
-            max_length=200,
-            num_beams=1,
-            do_sample=False)
+            max_length=200)
         print(generate_ids)
         print(tokenizer.batch_decode(generate_ids, 
         skip_special_tokens=True, 

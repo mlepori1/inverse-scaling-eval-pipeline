@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import numpy as np
 import torch
 import torch.nn.functional as F
+import pandas as pd
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig  # type: ignore
 from huggingface_hub import snapshot_download
@@ -111,6 +112,11 @@ class HFModel(Model):
             use_fast=use_fast,
             model_max_length=1023,
         )
+        self.text_file_name = model_name + "_" + "QR.csv"
+        self.file_contents = {
+            "prompt": [],
+            "generation": []
+        }
 
     def _load_opt(self, checkpoint: str, device: Device):
         self.model = AutoModelForCausalLM.from_pretrained(
@@ -207,12 +213,23 @@ class HFModel(Model):
             labels_predicted.append(label_predicted)
 
             prompt_start += n_classes
+            pd.DataFrame.from_dict(self.file_contents).to_csv(self.text_file_name)
         return {
             "loss": losses,
             "correct": labels_correct,
             "predicted": labels_predicted,
             "total_logprob": total_logprobs,
         }
+
+    def _generate_text(self, tokenized_inputs):
+        generate_ids = self.model.generate(
+            tokenized_inputs["input_ids"], 
+            max_length=500,
+            temperature=0.0)
+        return tokenizer.batch_decode(generate_ids, 
+        skip_special_tokens=True, 
+        clean_up_tokenization_spaces=False)[0]
+
 
     def _get_logits_and_tokens(
         self, prompts: list[str]
@@ -223,6 +240,8 @@ class HFModel(Model):
             tokenized_inputs = self.tokenizer(
                 prompt, return_tensors="pt", truncation=True
             ).to(self.device)
+            self.file_contents["prompt"].append(prompt)
+            self.file_contents["generation"].append(self._generate_text(tokenized_inputs))
             outputs = self.model(**tokenized_inputs)
             logits = outputs["logits"].detach().to(device="cpu", dtype=torch.float32)
             # need to remove batch dimension

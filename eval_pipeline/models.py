@@ -112,7 +112,7 @@ class HFModel(Model):
             use_fast=use_fast,
             model_max_length=1023,
         )
-        self.text_file_name = model_name + "_" + "QR.csv"
+        self.text_file_name = model_name + ".csv"
         self.file_contents = {
             "prompt": [],
             "generation": []

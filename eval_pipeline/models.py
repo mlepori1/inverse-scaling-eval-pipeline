@@ -227,6 +227,7 @@ class HFModel(Model):
         }
 
     def _generate_text(self, prompt):
+        print(prompt)
         tokenized_inputs = self.tokenizer(
                 prompt, return_tensors="pt", truncation=True
             ).to(self.device)
@@ -234,10 +235,10 @@ class HFModel(Model):
         # See https://huggingface.co/docs/transformers/v4.23.1/en/main_classes/text_generation#transformers.generation_utils.GenerationMixin.generate)
         generate_ids = self.model.generate(
             **tokenized_inputs, 
-            max_length=30,
+            max_length=200,
             num_beams=1,
             do_sample=False)
-        return tokenizer.batch_decode(generate_ids, 
+        return tokenizer.decode(generate_ids, 
         skip_special_tokens=True, 
         clean_up_tokenization_spaces=True)[0]
 

@@ -174,6 +174,11 @@ class HFModel(Model):
         labels_predicted = []
         prompt_start = 0
         for example in examples:
+
+            # First, generate text and write it to file
+            self.file_contents["prompt"].append(example.prompt)
+            self.file_contents["generation"].append(self._generate_text(example.prompt))
+
             n_classes = len(example.classes)
             class_logprobs = []
             for j in range(n_classes):
@@ -221,14 +226,20 @@ class HFModel(Model):
             "total_logprob": total_logprobs,
         }
 
-    def _generate_text(self, tokenized_inputs):
+    def _generate_text(self, prompt):
+        tokenized_inputs = self.tokenizer(
+                prompt, return_tensors="pt", truncation=True
+            ).to(self.device)
+        # Greedily generate text 
+        # See https://huggingface.co/docs/transformers/v4.23.1/en/main_classes/text_generation#transformers.generation_utils.GenerationMixin.generate)
         generate_ids = self.model.generate(
-            tokenized_inputs["input_ids"], 
-            max_length=500,
-            temperature=0.0)
+            **tokenized_inputs, 
+            max_length=30,
+            num_beams=1,
+            do_sample=False)
         return tokenizer.batch_decode(generate_ids, 
         skip_special_tokens=True, 
-        clean_up_tokenization_spaces=False)[0]
+        clean_up_tokenization_spaces=True)[0]
 
 
     def _get_logits_and_tokens(
@@ -240,8 +251,6 @@ class HFModel(Model):
             tokenized_inputs = self.tokenizer(
                 prompt, return_tensors="pt", truncation=True
             ).to(self.device)
-            self.file_contents["prompt"].append(prompt)
-            self.file_contents["generation"].append(self._generate_text(tokenized_inputs))
             outputs = self.model(**tokenized_inputs)
             logits = outputs["logits"].detach().to(device="cpu", dtype=torch.float32)
             # need to remove batch dimension

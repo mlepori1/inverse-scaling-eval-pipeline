@@ -229,6 +229,7 @@ class HFModel(Model):
     def _generate_text(self, prompt):
         print(prompt)
         inputs = self.tokenizer(str(prompt), return_tensors="pt").to(self.device)
+        print(inputs.input_ids)
         # Greedily generate text 
         # See https://huggingface.co/docs/transformers/v4.23.1/en/main_classes/text_generation#transformers.generation_utils.GenerationMixin.generate)
         generate_ids = self.model.generate(
